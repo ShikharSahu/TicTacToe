@@ -2,8 +2,10 @@ package com.example.tiktaktoe;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
@@ -13,9 +15,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.Random;
-import java.util.concurrent.CompletableFuture;
 
-public class TicTacToe extends AppCompatActivity {
+public class TicTacToe extends AppCompatActivity implements CallbackInterface {
 
     private ActivityTicTacToeBinding binding;
     private boolean isSinglePlayer;
@@ -33,9 +34,10 @@ public class TicTacToe extends AppCompatActivity {
 
     private Enum firstTurn = Symbols.Cross;
     private Enum currentTurn = Symbols.Cross;
-    volatile int moves = 9;
 
-    private boolean gameOver = false;
+    int youWins = 0, compWins = 0, xWins = 0, oWins = 0;
+
+    Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,33 +60,46 @@ public class TicTacToe extends AppCompatActivity {
             setUpBoardSinglePlayer();
         }
         else{
-            setUpBoardMultiPlayer();
+            setUpBoardMultiplePlayers();
         }
 
     }
 
-    private void setUpBoardMultiPlayer() {
+    private void setUpBoardSinglePlayer() {
+//        Toast.makeText(this,Thread.currentThread().getName(), Toast.LENGTH_SHORT).show();
+
+        setTurnLabel();
+        setScoreCard();
 
         View.OnClickListener onClickListener = v -> {
+            if(!movesLeft()) {
+                return;
+            }
             ((Button)v).setText(YOU);
-            moves--;
-            checkIfWinMultiPlayer(YOU);
             v.setClickable(false);
             currentTurn = COMP_TURN;
-            performCompTurn();
+            setTurnLabel();
+            performCompTurnMP();
         };
         for(Button button : allButtons){
             button.setOnClickListener(onClickListener);
         }
 
         if (!currentTurn.equals(YOU_TURN)) {
-            performCompTurn();
+            performCompTurnMP();
         }
     }
 
-    private void performCompTurn() {
-        if(moves<=0){
+    private void performCompTurnMP() {
+
+        if(checkIfWin(YOU)) {
+            youWins++;
+            askToResetWithAlertBox("You Won!!");
+            return;
+        }
+        else if(!movesLeft()){
             askToResetWithAlertBox("Draw \nUsers Out of valid moves");
+            return;
         }
         ArrayList<Button> buttonsToBeTurnedOffOn = new ArrayList<>();
         for(Button button : allButtons){
@@ -93,59 +108,23 @@ public class TicTacToe extends AppCompatActivity {
         for(Button button : buttonsToBeTurnedOffOn){
             button.setClickable(false);
         }
+        Log.d("eee", "performCompTurn: "+buttonsToBeTurnedOffOn.size());
 
+        Random random = new Random(System.currentTimeMillis());
+        int rInt = random.nextInt(buttonsToBeTurnedOffOn.size());
+        Button toBePressed = buttonsToBeTurnedOffOn.remove(rInt);
+        ThreadedMoveMaker threadedMoveMaker = new ThreadedMoveMaker(this, toBePressed, buttonsToBeTurnedOffOn , handler);
 
-
-        Runnable runnable = new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    Thread.sleep(2000);
-                } catch (InterruptedException e) {}
-                Random random = new Random(System.currentTimeMillis());
-                int rInt = random.nextInt(buttonsToBeTurnedOffOn.size());
-                Button toBePressed = buttonsToBeTurnedOffOn.remove(rInt);
-                toBePressed.setText(COMP);
-                moves --;
-
-                currentTurn = YOU_TURN;
-                for( Button button : buttonsToBeTurnedOffOn){
-                    button.setClickable(true);
-                }
-                buttonsToBeTurnedOffOn.clear();
-
-
-            }
-        };
-        Thread thread = new Thread(runnable);
-        thread.start();
-        try {
-            thread.join();
-            checkIfWinMultiPlayer(COMP);
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void checkIfWinMultiPlayer(String player) {
-        boolean won = checkIfWin(player);
-        if (won && !gameOver){
-            gameOver = true;
-            askToResetWithAlertBox(player + " Won!");
-        }
-        else{
-            if(moves<=0){ askToResetWithAlertBox("Draw \nUsers Out of valid moves"); }
-        }
     }
 
 
-    private void setUpBoardSinglePlayer() {
+
+    private void setUpBoardMultiplePlayers() {
 
         setTurnLabel();
+        setScoreCard();
 
         View.OnClickListener onClickListener = v -> {
-            moves--;
             if(currentTurn == Symbols.Cross){
                 ((Button)v).setText(CROSS);
             }
@@ -153,7 +132,7 @@ public class TicTacToe extends AppCompatActivity {
                 ((Button)v).setText(CIRCLE);
             }
             v.setClickable(false);
-            Toast.makeText(TicTacToe.this,v.getId()+ " clicked",Toast.LENGTH_SHORT).show();
+//            Toast.makeText(TicTacToe.this,v.getId()+ " clicked",Toast.LENGTH_SHORT).show();
 
             boolean won = checkIfWin(currentTurn.equals(Symbols.Cross) ? CROSS : CIRCLE);
 
@@ -168,10 +147,16 @@ public class TicTacToe extends AppCompatActivity {
 
             }
             else {
+                if(currentTurn == Symbols.Cross){
+                    xWins++;
+                }
+                else{
+                    oWins++;
+                }
                 askToResetWithAlertBox((currentTurn.equals(Symbols.Cross) ? CROSS : CIRCLE )+ " wins!");
             }
-            if (!won && moves<=0){
-                askToResetWithAlertBox("Draw");
+            if (!won && !movesLeft()){
+                askToResetWithAlertBox("Draw \nUsers Out of valid moves");
             }
 
         };
@@ -181,37 +166,48 @@ public class TicTacToe extends AppCompatActivity {
     }
 
     public void setTurnLabel(){
-        if(currentTurn .equals( Symbols.Cross)){
-            binding.tvTurnOf.setText("Turn of: "+ CROSS);
+        if (!isSinglePlayer) {
+            if (currentTurn.equals(Symbols.Cross)) {
+                binding.tvTurnOf.setText("Turn of: " + CROSS);
+            } else {
+                binding.tvTurnOf.setText("Turn of: " + CIRCLE);
+            }
         }
         else{
-            binding.tvTurnOf.setText("Turn of: "+ CIRCLE);
+            if(currentTurn.equals(YOU_TURN)){
+                binding.tvTurnOf.setText("Turn of: " + "YOU/"+YOU);
+            }
+            else{
+                binding.tvTurnOf.setText("Turn of: " + "COMP/"+COMP);
+            }
         }
     }
 
-
-    private void resetBoardSinglePlayer() {
-
-        gameOver = false;
+    private void resetBoard() {
 
         for (Button x : allButtons){
             x.setText("");
             x.setClickable(true);
         }
 
-        moves = 9;
 
-        currentTurn = (currentTurn.equals(Symbols.Cross)) ? Symbols.Circle : Symbols.Cross;
-        firstTurn = currentTurn;
 
-        if( !isSinglePlayer){
+
+        if(isSinglePlayer){
             if (!currentTurn.equals(YOU_TURN)) {
-                performCompTurn();
+                currentTurn = COMP_TURN;
+                performCompTurnMP();
+            }
+            else{
+                currentTurn = YOU_TURN;
             }
         }
-        else {
-            setTurnLabel();
+        else{
+            currentTurn = (currentTurn.equals(Symbols.Cross)) ? Symbols.Circle : Symbols.Cross;
+
         }
+        firstTurn = currentTurn;
+        setTurnLabel();
 
     }
 
@@ -219,11 +215,22 @@ public class TicTacToe extends AppCompatActivity {
         new MaterialAlertDialogBuilder(TicTacToe.this)
                 .setTitle("Result")
                 .setMessage(Message)
-                .setPositiveButton("Reset", (dialog, which) -> resetBoardSinglePlayer())
-                .setCancelable(true)
+                .setPositiveButton("Reset", (dialog, which) -> resetBoard())
+                .setCancelable(false)
 //                .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+        setScoreCard();
     }
+
+    private void setScoreCard() {
+        if(!isSinglePlayer){
+            binding.tvScoreCard.setText("ScoreCard:\n"+CROSS +": "+xWins+"\n"+CIRCLE+": "+oWins);
+        }
+        else {
+            binding.tvScoreCard.setText("ScoreCard:\n"+YOU +": "+youWins+"\n"+COMP+": "+compWins);
+        }
+    }
+
 
     private boolean checkIfWin(String currentTurnSymbol) {
 
@@ -236,6 +243,17 @@ public class TicTacToe extends AppCompatActivity {
         String xo20 = binding.xo20.getText().toString();
         String xo21 = binding.xo21.getText().toString();
         String xo22 = binding.xo22.getText().toString();
+
+
+        Log.d("eee", "checkIfWin:xo00 "+xo00);
+        Log.d("eee", "checkIfWin:xo01 "+xo01);
+        Log.d("eee", "checkIfWin:xo02 "+xo02);
+        Log.d("eee", "checkIfWin:xo10 "+xo10);
+        Log.d("eee", "checkIfWin:xo11 "+xo11);
+        Log.d("eee", "checkIfWin:xo12 "+xo12);
+        Log.d("eee", "checkIfWin:xo20 "+xo20);
+        Log.d("eee", "checkIfWin:xo21 "+xo21);
+        Log.d("eee", "checkIfWin:xo22 "+xo22);
 
         boolean horizontal = symbolMatch(xo00, xo01, xo02, currentTurnSymbol)
                 || symbolMatch(xo10, xo11, xo12, currentTurnSymbol)
@@ -255,8 +273,72 @@ public class TicTacToe extends AppCompatActivity {
         return s1.equals(currentTurnSymbol) && s2.equals(currentTurnSymbol) && s3.equals(currentTurnSymbol);
     }
 
-    interface CallbackInterface{
-        void callbackMethod();
+    @Override
+    public void callbackMethod(Button toBePressed, ArrayList<Button> buttonsToBeTurnedOffOn, Handler handler) {
+//        toBePressed.setText(COMP);
+        currentTurn = YOU_TURN;
+//        setTurnLabel();
+        toBePressed.setText(COMP);
+
+        handler.post(() -> {
+            setTurnLabel();
+        });
+
+        for( Button button : buttonsToBeTurnedOffOn){
+            button.setClickable(true);
+        }
+        buttonsToBeTurnedOffOn.clear();
+
+        if(checkIfWin(COMP)){
+            handler.post(() -> {
+                compWins++;
+//                Toast.makeText(getApplicationContext(),Thread.currentThread().getName(), Toast.LENGTH_SHORT).show();
+                askToResetWithAlertBox("COMP WON");
+
+
+            });
+
+        }
+        else
+        if(!movesLeft()){
+            handler.post(() -> {
+//                Toast.makeText(getApplicationContext(),Thread.currentThread().getName(), Toast.LENGTH_SHORT).show();
+                askToResetWithAlertBox("Draw \nUsers Out of valid moves");
+            });
+        }
+
     }
 
+    boolean movesLeft(){
+        for (Button button : allButtons){
+            if(button.getText().toString().equals("")) return true;
+        }
+        return false;
+    }
+
+
 }
+class ThreadedMoveMaker {
+    CallbackInterface callbackInterface;
+
+    public ThreadedMoveMaker(CallbackInterface callbackInterface, Button toBePressed, ArrayList<Button> buttonsToBeTurnedOffOn, Handler handler ) {
+        this.callbackInterface = callbackInterface;
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {}
+
+                Looper.prepare();
+                callbackInterface.callbackMethod(toBePressed,  buttonsToBeTurnedOffOn, handler);
+            }
+        };
+        new Thread(runnable).start();
+    }
+}
+
+interface CallbackInterface{
+    void callbackMethod(Button toBePressed, ArrayList<Button> buttonsToBeTurnedOffOn, Handler handler);
+}
+
