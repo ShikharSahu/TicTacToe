@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TicTacToe">
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/tv_turn_of"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="something Turn of X"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.appcompat.widget.LinearLayoutCompat
+        style="@style/OuterLinearLayout"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_turn_of"
+        app:layout_constraintVertical_bias="0.507">
+
+
+        <androidx.appcompat.widget.LinearLayoutCompat style="@style/InnerLinearLayout">
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_00"
+                />
+
+            <View style="@style/verticalLine" />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_01" />
+
+            <View style="@style/verticalLine" />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_02"
+                />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+
+        <View style="@style/horizontalLine" />
+
+
+        <androidx.appcompat.widget.LinearLayoutCompat style="@style/InnerLinearLayout">
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_10"
+                />
+
+            <View style="@style/verticalLine" />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_11"
+                />
+
+            <View style="@style/verticalLine" />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_12"
+                />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+        <View style="@style/horizontalLine" />
+
+        <androidx.appcompat.widget.LinearLayoutCompat style="@style/InnerLinearLayout">
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_20"
+                />
+
+            <View style="@style/verticalLine"
+                />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_21"
+                />
+
+            <View style="@style/verticalLine" />
+
+            <Button style="@style/ButtonColumn"
+                android:id="@+id/xo_22"
+                />
+
+        </androidx.appcompat.widget.LinearLayoutCompat>
+
+    </androidx.appcompat.widget.LinearLayoutCompat>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
