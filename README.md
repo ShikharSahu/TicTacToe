@@ -8,16 +8,16 @@ A simple implementation of the classic passtime game
 ## Screenshots:
 
 ### Homescreen
-![homescreen](https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/homescreen.jpeg)
+<img src="https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/homescreen.jpeg" alt="homescreen" width="300"/>
 
 ### Single Player:
-![single player](https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/single_game.jpeg)
+<img src="https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/single_game.jpeg" alt="single player" width="300"/>
 
 ### Winning Screen:
-![winning screen](https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/single_winning.jpeg)
+<img src="https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/single_winning.jpeg" alt="winning screen" width="300"/>
 
 ### Double Player:
-![double player](https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/dual_game.jpeg)
+<img src="https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/dual_game.jpeg" alt="double player" width="300"/>
 
 ### Winning Screen:
-![winning screen](https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/dual_winning.jpeg)
+<img src="https://github.com/ShikharSahu/imageRepo/blob/main/TicTacToe/dual_winning.jpeg" alt="winning screen" width="300"/>
